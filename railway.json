@@ -3,6 +3,6 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "gunicorn app:server"
+    "startCommand": "gunicorn app_C6:server"
   }
 }
