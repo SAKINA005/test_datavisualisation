@@ -2,3 +2,4 @@ dash
 plotly
 gunicorn
 plotly[express]
+dash_bootstrap_components
