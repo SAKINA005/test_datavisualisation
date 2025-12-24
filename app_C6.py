@@ -5,6 +5,7 @@ from nav_bar import navbar
 
 df = px.data.iris()
 
+
 colors = {
     'setosa': 'red',
     'versicolor': 'darkgreen',
@@ -229,7 +230,8 @@ def statsVirginica(val):
 app.title = 'Iris Dashboard'
 
 if __name__=='__main__':
-    app.run(debug=True)
+    app.run(debug=True , port=8050) 
 
 # Templates disponibles : plotly, plotly_white, plotly_dark, ggplot2, seaborn, simple_white
 #fig.update_layout(template='plotly_white')
+
