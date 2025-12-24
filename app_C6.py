@@ -2,454 +2,648 @@ from dash import html, Dash, dcc, dash_table, Output, Input
 import plotly.express as px
 import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
+import pandas as pd
 
+# =============================================================================
+# CONFIGURATION FUTURISTE
+# =============================================================================
 df = px.data.iris()
 
-# ========================== Navbar élégante ====================================
-def navbar(pathname):
+# Palette néon cyberpunk
+COLORS = {
+    'setosa': '#FF00FF',      # Magenta néon
+    'versicolor': '#00FFFF',   # Cyan néon
+    'virginica': '#00FF00',    # Vert néon
+    'background': '#0a0a0a',   # Noir profond
+    'card_bg': 'rgba(20, 20, 30, 0.6)',
+    'text_primary': '#ffffff',
+    'text_secondary': '#a0a0a0',
+    'accent': '#FF00FF',
+    'border': 'rgba(255, 0, 255, 0.3)'
+}
+
+# Fonts futuristes
+FONTS = {
+    'title': 'Orbitron, sans-serif',
+    'body': 'Space Grotesk, sans-serif'
+}
+
+# =============================================================================
+# COMPOSANTS REUTILISABLES
+# =============================================================================
+def neon_card(title, children, icon="⚡"):
+    """Carte avec effet néon et glassmorphism"""
+    return dbc.Card([
+        dbc.CardBody([
+            html.Div([
+                html.Span(icon, style={
+                    'font-size': '2rem', 
+                    'margin-right': '15px',
+                    'filter': 'drop-shadow(0 0 8px currentColor)'
+                }),
+                html.H3(title, style={
+                    'font-family': FONTS['title'],
+                    'font-weight': '700',
+                    'color': COLORS['text_primary'],
+                    'margin': 0,
+                    'text-shadow': '0 0 10px rgba(255,255,255,0.5)'
+                })
+            ], className='d-flex align-items-center mb-4'),
+            children
+        ])
+    ], style={
+        'background': COLORS['card_bg'],
+        'backdrop-filter': 'blur(20px)',
+        'border': f'1px solid {COLORS["border"]}',
+        'border-radius': '20px',
+        'box-shadow': f'0 0 30px rgba(255, 0, 255, 0.2), inset 0 0 20px rgba(255,255,255,0.05)',
+        'transition': 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+        'overflow': 'hidden',
+        'position': 'relative'
+    }, className='neon-card')
+
+def animated_stat(value, label, color):
+    """Stat avec animation au chargement"""
+    return html.Div([
+        html.Div(f'{value}', style={
+            'font-size': '2rem',
+            'font-weight': '800',
+            'color': color,
+            'font-family': FONTS['title'],
+            'text-shadow': f'0 0 15px {color}',
+            'animation': 'slideIn 0.6s ease-out'
+        }),
+        html.Div(label, style={
+            'font-size': '0.9rem',
+            'color': COLORS['text_secondary'],
+            'margin-top': '5px'
+        })
+    ], style={'text-align': 'center', 'padding': '15px'})
+
+# =============================================================================
+# NAVBAR FUTURISTE
+# =============================================================================
+def create_navbar(pathname):
+    links = [
+        {"label": "Accueil", "href": "/", "icon": "🏠"},
+        {"label": "Analyse FDA", "href": "/fda", "icon": "🧬"}
+    ]
+    
     return html.Div([
         dbc.Container([
             dbc.Row([
                 dbc.Col([
                     html.Div([
-                        html.Span('🌸', style={'font-size': '1.8rem', 'margin-right': '10px'}),
-                        html.Span('Iris Dashboard', style={
-                            'font-size': '1.5rem',
-                            'font-weight': '700',
-                            'background': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        html.Span('🌸', style={
+                            'font-size': '2.5rem',
+                            'animation': 'pulse 2s infinite',
+                            'filter': 'drop-shadow(0 0 10px #FF00FF)'
+                        }),
+                        html.Span('IRIS 2077', style={
+                            'font-size': '2rem',
+                            'font-weight': '900',
+                            'font-family': FONTS['title'],
+                            'background': 'linear-gradient(135deg, #FF00FF 0%, #00FFFF 100%)',
                             '-webkit-background-clip': 'text',
-                            '-webkit-text-fill-color': 'transparent'
+                            '-webkit-text-fill-color': 'transparent',
+                            'margin-left': '15px',
+                            'text-shadow': '0 0 20px rgba(255,0,255,0.5)'
                         })
                     ], style={'display': 'flex', 'align-items': 'center'})
-                ], width='auto'),
+                ], width="auto"),
+                
                 dbc.Col([
                     html.Div([
-                        dcc.Link(
-                            "Accueil",
-                            href="/",
-                            className="nav-link",
-                            style={
-                                'color': '#667eea' if pathname == "/" else '#718096',
-                                'font-weight': '600' if pathname == "/" else '500',
-                                'padding': '10px 20px',
-                                'border-radius': '8px',
-                                'background': 'rgba(102, 126, 234, 0.1)' if pathname == "/" else 'transparent',
-                                'transition': 'all 0.3s ease',
-                                'text-decoration': 'none',
-                                'margin-right': '10px'
-                            }
-                        ),
-                        dcc.Link(
-                            "Analyse FDA",
-                            href="/fda",
-                            className="nav-link",
-                            style={
-                                'color': '#667eea' if pathname == "/fda" else '#718096',
-                                'font-weight': '600' if pathname == "/fda" else '500',
-                                'padding': '10px 20px',
-                                'border-radius': '8px',
-                                'background': 'rgba(102, 126, 234, 0.1)' if pathname == "/fda" else 'transparent',
-                                'transition': 'all 0.3s ease',
-                                'text-decoration': 'none'
-                            }
-                        ),
-                    ], style={'display': 'flex', 'align-items': 'center', 'justify-content': 'flex-end'})
-                ], className='text-end')
+                        html.Div([
+                            html.Span(link['icon'], style={'margin-right': '8px'}),
+                            link['label'],
+                            html.Div(style={
+                                'height': '2px',
+                                'background': COLORS['accent'],
+                                'width': '100%' if pathname == link['href'] else '0%',
+                                'transition': 'width 0.3s ease',
+                                'marginTop': '5px',
+                                'boxShadow': f'0 0 10px {COLORS["accent"]}'
+                            })
+                        ], style={
+                            'color': COLORS['text_primary'] if pathname == link['href'] else COLORS['text_secondary'],
+                            'font-weight': '600',
+                            'cursor': 'pointer',
+                            'padding': '10px 20px',
+                            'border': f'1px solid {COLORS["border"]}' if pathname == link['href'] else '1px solid transparent',
+                            'border-radius': '12px',
+                            'background': 'rgba(255,0,255,0.1)' if pathname == link['href'] else 'transparent',
+                            'transition': 'all 0.3s ease',
+                            'text-decoration': 'none',
+                            'display': 'inline-block',
+                            'margin': '0 10px'
+                        }) for link in links
+                    ], style={'display': 'flex', 'justify-content': 'flex-end'})
+                ])
             ], align='center', className='g-0')
         ], fluid=True)
     ], style={
-        'background': 'white',
-        'padding': '15px 0',
-        'box-shadow': '0 2px 8px rgba(0,0,0,0.08)',
-        'margin-bottom': '0',
+        'background': 'rgba(10, 10, 10, 0.8)',
+        'backdrop-filter': 'blur(20px)',
+        'padding': '20px 0',
+        'border-bottom': f'1px solid {COLORS["border"]}',
         'position': 'sticky',
-        'top': '0',
-        'z-index': '1000'
+        'top': 0,
+        'z-index': 1000,
+        'box-shadow': '0 5px 30px rgba(255, 0, 255, 0.1)'
     })
 
-colors = {
-    'setosa': '#FF6B6B',
-    'versicolor': '#4ECDC4',
-    'virginica': '#A78BFA'
-}
-
-liste_variable_numeric = list(df.columns)
-liste_variable_numeric.remove('species')
-liste_variable_numeric.remove('species_id')
-
-# ========================== Styles personnalisés ====================================
-CARD_STYLE = {
-    'border-radius': '16px',
-    'box-shadow': '0 8px 32px rgba(0, 0, 0, 0.08)',
-    'border': 'none',
-    'transition': 'all 0.3s ease'
-}
-
-HEADER_STYLE = {
-    'background': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    'color': 'white',
-    'border-radius': '16px 16px 0 0',
-    'padding': '20px',
-    'font-weight': '600'
-}
-
-STAT_CARD_STYLE = {
-    'border-radius': '12px',
-    'padding': '15px',
-    'margin': '8px 0',
-    'background': 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-    'transition': 'transform 0.2s ease',
-}
-
-# ========================== Graphiques améliorés ====================================
-def create_scatter_plot(x, y, title):
-    fig = px.scatter(df, x=x, y=y, color='species', 
-                     color_discrete_map=colors,
-                     title=title,
-                     height=350)
+# =============================================================================
+# GRAPHIQUES FUTURISTES
+# =============================================================================
+def create_futuristic_scatter(x, y, title, z=None):
+    """Crée un scatter plot avec style néon"""
+    if z:
+        fig = go.Figure(data=[
+            go.Scatter3d(
+                x=df[x],
+                y=df[y],
+                z=df[z],
+                mode='markers',
+                marker=dict(
+                    size=8,
+                    color=[COLORS.get(species) for species in df['species']],
+                    opacity=0.9,
+                    line=dict(width=2, color='white')
+                ),
+                text=df['species'],
+                hovertemplate='<b>%{text}</b><br>' +
+                              f'{x}: %{{x}}<br>' +
+                              f'{y}: %{{y}}<br>' +
+                              f'{z}: %{{z}}<extra></extra>'
+            )
+        ])
+        fig.update_layout(
+            scene=dict(
+                xaxis=dict(title=x.replace('_', ' ').title(), gridcolor='rgba(255,255,255,0.1)'),
+                yaxis=dict(title=y.replace('_', ' ').title(), gridcolor='rgba(255,255,255,0.1)'),
+                zaxis=dict(title=z.replace('_', ' ').title(), gridcolor='rgba(255,255,255,0.1)'),
+                bgcolor='rgba(0,0,0,0.5)'
+            )
+        )
+    else:
+        fig = go.Figure()
+        for species in df['species'].unique():
+            species_data = df[df['species'] == species]
+            fig.add_trace(go.Scatter(
+                x=species_data[x],
+                y=species_data[y],
+                mode='markers',
+                name=species,
+                marker=dict(
+                    size=12,
+                    color=COLORS[species],
+                    opacity=0.8,
+                    line=dict(width=2, color='white')
+                ),
+                hovertemplate=f'<b>{species}</b><br>' +
+                              f'{x}: %{{x}}<br>' +
+                              f'{y}: %{{y}}<extra></extra>'
+            ))
     
     fig.update_layout(
-        template='plotly_white',
-        font=dict(family="Inter, sans-serif", size=12),
-        title=dict(font=dict(size=16, color='#2D3748', weight=600), x=0.5, xanchor='center'),
+        title=dict(
+            text=title,
+            font=dict(size=18, family=FONTS['title'], color=COLORS['text_primary']),
+            x=0.5,
+            xanchor='center'
+        ),
         paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        margin=dict(t=60, b=40, l=40, r=40),
+        plot_bgcolor='rgba(0,0,0,0.3)',
+        font=dict(family=FONTS['body'], color=COLORS['text_secondary']),
         legend=dict(
             orientation="h",
             yanchor="bottom",
             y=1.02,
             xanchor="center",
             x=0.5,
-            bgcolor='rgba(255,255,255,0.8)',
-            bordercolor='#E2E8F0',
-            borderwidth=1
+            font=dict(color=COLORS['text_primary'])
+        ),
+        margin=dict(t=80, b=50, l=50, r=50),
+        xaxis=dict(
+            gridcolor='rgba(255,255,255,0.1)',
+            showgrid=True,
+            zeroline=False
+        ),
+        yaxis=dict(
+            gridcolor='rgba(255,255,255,0.1)',
+            showgrid=True,
+            zeroline=False
         )
     )
     
-    fig.update_traces(marker=dict(size=10, line=dict(width=1.5, color='white')))
-    fig.update_xaxes(showgrid=True, gridwidth=0.5, gridcolor='#E2E8F0')
-    fig.update_yaxes(showgrid=True, gridwidth=0.5, gridcolor='#E2E8F0')
-    
     return fig
 
-scatter_plot = create_scatter_plot('sepal_length', 'sepal_width', 'Longueur vs Largeur Sépale')
-scatter_plot2 = create_scatter_plot('petal_length', 'petal_width', 'Longueur vs Largeur Pétale')
-
-scatter_plot3 = px.scatter_3d(df, x='petal_length', y='petal_width', z='sepal_length', 
-                              color='species', color_discrete_map=colors,
-                              title='Vue 3D - Dimensions Florales',
-                              height=350)
-scatter_plot3.update_layout(
-    template='plotly_white',
-    font=dict(family="Inter, sans-serif", size=11),
-    title=dict(font=dict(size=16, color='#2D3748', weight=600), x=0.5, xanchor='center'),
-    paper_bgcolor='rgba(0,0,0,0)',
-    margin=dict(t=60, b=20, l=20, r=20),
-    scene=dict(
-        xaxis=dict(gridcolor='#E2E8F0', showbackground=True, backgroundcolor='rgba(240,240,240,0.3)'),
-        yaxis=dict(gridcolor='#E2E8F0', showbackground=True, backgroundcolor='rgba(240,240,240,0.3)'),
-        zaxis=dict(gridcolor='#E2E8F0', showbackground=True, backgroundcolor='rgba(240,240,240,0.3)')
-    )
-)
-scatter_plot3.update_traces(marker=dict(size=6, line=dict(width=1, color='white')))
-
-# ========================== Table stylisée ====================================
-table = dash_table.DataTable(
-    df.to_dict(orient='records'),
-    page_size=12,
-    style_table={'overflowX': 'auto'},
-    style_header={
-        'backgroundColor': '#667eea',
-        'color': 'white',
-        'fontWeight': '600',
-        'textAlign': 'center',
-        'padding': '12px',
-        'font-family': 'Inter, sans-serif'
-    },
-    style_cell={
-        'textAlign': 'center',
-        'padding': '12px',
-        'font-family': 'Inter, sans-serif',
-        'fontSize': '13px'
-    },
-    style_data={
-        'border': '1px solid #E2E8F0'
-    },
-    style_data_conditional=[
-        {
-            'if': {'row_index': 'odd'},
-            'backgroundColor': '#F7FAFC'
-        },
-        {
-            'if': {'row_index': 'even'},
-            'backgroundColor': 'white'
-        }
-    ]
-)
-
-# ========================== App initialization ====================================
-app = Dash(__name__, external_stylesheets=[
-    dbc.themes.BOOTSTRAP,
-    'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'
-])
-server = app.server
-
-# ========================== Layout principal ====================================
-layout1 = html.Div([
-    # Hero Section
-    dbc.Container([
-        html.Div([
-            html.H1('🌸 Iris Dataset Explorer', 
-                   className='text-center mb-2',
-                   style={
-                       'font-weight': '700',
-                       'background': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                       '-webkit-background-clip': 'text',
-                       '-webkit-text-fill-color': 'transparent',
-                       'font-size': '2.8rem',
-                       'margin-top': '30px'
-                   }),
-            html.P('Analyse interactive des espèces d\'iris avec visualisations avancées',
-                  className='text-center text-muted mb-4',
-                  style={'font-size': '1.1rem'})
-        ]),
+# =============================================================================
+# LAYOUT PRINCIPAL
+# =============================================================================
+layout_home = html.Div([
+    # Hero Section avec effet parallax
+    html.Div([
+        dbc.Container([
+            html.Div([
+                html.H1('IRIS DATASET 2077', 
+                       style={
+                           'font-family': FONTS['title'],
+                           'font-size': '4rem',
+                           'font-weight': '900',
+                           'background': 'linear-gradient(135deg, #FF00FF 0%, #00FFFF 50%, #00FF00 100%)',
+                           '-webkit-background-clip': 'text',
+                           '-webkit-text-fill-color': 'transparent',
+                           'text-align': 'center',
+                           'margin-bottom': '20px',
+                           'animation': 'glow 3s ease-in-out infinite',
+                           'position': 'relative',
+                           'z-index': 2
+                       }),
+                html.P('Analyse biométrique avancée des classifications florales',
+                      style={
+                          'font-family': FONTS['body'],
+                          'font-size': '1.3rem',
+                          'color': COLORS['text_secondary'],
+                          'text-align': 'center',
+                          'max-width': '600px',
+                          'margin': '0 auto',
+                          'position': 'relative',
+                          'z-index': 2
+                      })
+            ], style={'padding': '100px 0', 'position': 'relative'})
+        ], fluid=True),
         
-        # Statistics Cards Row
+        # Particules d'arrière-plan
+        html.Div([
+            html.Div(className='particle', style={
+                '--x': '10%', '--y': '20%', '--delay': '0s', '--color': '#FF00FF'
+            }),
+            html.Div(className='particle', style={
+                '--x': '30%', '--y': '60%', '--delay': '0.5s', '--color': '#00FFFF'
+            }),
+            html.Div(className='particle', style={
+                '--x': '70%', '--y': '40%', '--delay': '1s', '--color': '#00FF00'
+            }),
+            html.Div(className='particle', style={
+                '--x': '90%', '--y': '80%', '--delay': '1.5s', '--color': '#FFFF00'
+            }),
+        ], style={
+            'position': 'absolute',
+            'top': 0,
+            'left': 0,
+            'width': '100%',
+            'height': '100%',
+            'overflow': 'hidden',
+            'z-index': 1
+        })
+    ], style={
+        'background': 'radial-gradient(ellipse at center, #1a1a2e 0%, #0a0a0a 100%)',
+        'margin-bottom': '50px',
+        'position': 'relative',
+        'overflow': 'hidden'
+    }),
+    
+    dbc.Container([
+        # Statistiques en temps réel
         dbc.Row([
             dbc.Col([
-                dbc.Card([
-                    dbc.CardBody([
-                        html.Div([
-                            html.Span('🌺', style={'font-size': '2rem', 'margin-right': '10px'}),
-                            html.H5('Setosa', className='d-inline-block mb-0',
-                                   style={'color': colors['setosa'], 'font-weight': '600'})
-                        ], className='d-flex align-items-center mb-3'),
-                        dcc.Dropdown(
-                            options=[{'label': v.replace('_', ' ').title(), 'value': v} 
-                                    for v in liste_variable_numeric],
-                            value=liste_variable_numeric[0],
-                            id='liste_pour_setosa',
-                            style={'margin-bottom': '15px'},
-                            className='shadow-sm'
-                        ),
-                        html.Div(id='stats_setosa')
-                    ])
-                ], style=CARD_STYLE)
+                neon_card('🧬 SETOSA', 
+                         html.Div([
+                             dcc.Dropdown(
+                                 options=[{'label': v.replace('_', ' ').title(), 'value': v} 
+                                         for v in df.columns if v not in ['species', 'species_id']],
+                                 value='sepal_length',
+                                 id='dropdown-setosa',
+                                 style={
+                                     'background': 'rgba(255,0,255,0.1)',
+                                     'border': '1px solid rgba(255,0,255,0.3)',
+                                     'border-radius': '12px',
+                                     'margin-bottom': '20px'
+                                 }
+                             ),
+                             html.Div(id='stats-setosa', style={'animation': 'fadeIn 0.5s ease'})
+                         ]), icon='🌺')
             ], lg=4, md=12, className='mb-4'),
             
             dbc.Col([
-                dbc.Card([
-                    dbc.CardBody([
-                        html.Div([
-                            html.Span('🌼', style={'font-size': '2rem', 'margin-right': '10px'}),
-                            html.H5('Versicolor', className='d-inline-block mb-0',
-                                   style={'color': colors['versicolor'], 'font-weight': '600'})
-                        ], className='d-flex align-items-center mb-3'),
-                        dcc.Dropdown(
-                            options=[{'label': v.replace('_', ' ').title(), 'value': v} 
-                                    for v in liste_variable_numeric],
-                            value=liste_variable_numeric[0],
-                            id='liste_pour_versicolor',
-                            style={'margin-bottom': '15px'},
-                            className='shadow-sm'
-                        ),
-                        html.Div(id='stats_versicolor')
-                    ])
-                ], style=CARD_STYLE)
+                neon_card('⚡ VERSICOLOR',
+                         html.Div([
+                             dcc.Dropdown(
+                                 options=[{'label': v.replace('_', ' ').title(), 'value': v} 
+                                         for v in df.columns if v not in ['species', 'species_id']],
+                                 value='sepal_length',
+                                 id='dropdown-versicolor',
+                                 style={
+                                     'background': 'rgba(0,255,255,0.1)',
+                                     'border': '1px solid rgba(0,255,255,0.3)',
+                                     'border-radius': '12px',
+                                     'margin-bottom': '20px'
+                                 }
+                             ),
+                             html.Div(id='stats-versicolor', style={'animation': 'fadeIn 0.5s ease'})
+                         ]), icon='🌼')
             ], lg=4, md=12, className='mb-4'),
             
             dbc.Col([
-                dbc.Card([
-                    dbc.CardBody([
-                        html.Div([
-                            html.Span('🌷', style={'font-size': '2rem', 'margin-right': '10px'}),
-                            html.H5('Virginica', className='d-inline-block mb-0',
-                                   style={'color': colors['virginica'], 'font-weight': '600'})
-                        ], className='d-flex align-items-center mb-3'),
-                        dcc.Dropdown(
-                            options=[{'label': v.replace('_', ' ').title(), 'value': v} 
-                                    for v in liste_variable_numeric],
-                            value=liste_variable_numeric[0],
-                            id='liste_pour_virginica',
-                            style={'margin-bottom': '15px'},
-                            className='shadow-sm'
-                        ),
-                        html.Div(id='stats_virginica')
-                    ])
-                ], style=CARD_STYLE)
+                neon_card('🚀 VIRGINICA',
+                         html.Div([
+                             dcc.Dropdown(
+                                 options=[{'label': v.replace('_', ' ').title(), 'value': v} 
+                                         for v in df.columns if v not in ['species', 'species_id']],
+                                 value='sepal_length',
+                                 id='dropdown-virginica',
+                                 style={
+                                     'background': 'rgba(0,255,0,0.1)',
+                                     'border': '1px solid rgba(0,255,0,0.3)',
+                                     'border-radius': '12px',
+                                     'margin-bottom': '20px'
+                                 }
+                             ),
+                             html.Div(id='stats-virginica', style={'animation': 'fadeIn 0.5s ease'})
+                         ]), icon='🌷')
             ], lg=4, md=12, className='mb-4'),
-        ]),
+        ], className='g-4'),
         
-        # Graphiques Section
-        dbc.Card([
-            dbc.CardBody([
-                html.Div([
-                    html.H4('📊 Visualisations Interactives', 
-                           style={'font-weight': '600', 'color': '#2D3748', 'margin-bottom': '5px'}),
-                    html.P('Explorez les relations entre les différentes dimensions', 
-                          className='text-muted mb-3')
-                ]),
-                
-                dbc.Row([
-                    dbc.Col([
-                        html.Label('Style des graphiques:', 
-                                  style={'font-weight': '500', 'color': '#4A5568', 'margin-bottom': '8px'}),
-                    ], width='auto'),
-                    dbc.Col([
-                        dbc.RadioItems(
-                            options=[
-                                {"label": "🎨 Plotly", "value": "plotly"},
-                                {"label": "⚪ White", "value": "plotly_white"},
-                                {"label": "⚫ Dark", "value": "plotly_dark"},
-                                {"label": "📈 GGPlot2", "value": "ggplot2"},
-                                {"label": "🌊 Seaborn", "value": "seaborn"},
-                                {"label": "✨ Simple", "value": "simple_white"},
-                            ],
-                            id='style_graph',
-                            inline=True,
-                            value='plotly_white',
-                            className='mb-3'
-                        ),
-                    ]),
-                ], align='center', className='mb-4'),
-                
-                dbc.Row(id='graphs', className='g-4')
-            ], className='p-4')
-        ], style={**CARD_STYLE, 'margin-bottom': '30px'}),
+        # Section Graphiques
+        neon_card('📡 Visualisations Dimensionnelles Avancées',
+                 html.Div([
+                     dbc.Row([
+                         dbc.Col([
+                             html.Label('Mode d\'affichage:', style={
+                                 'font-family': FONTS['body'],
+                                 'color': COLORS['text_secondary']
+                             }),
+                             dbc.RadioItems(
+                                 options=[
+                                     {"label": "🌌 Standard", "value": "standard"},
+                                     {"label": "⚡ Néon", "value": "neon"},
+                                     {"label": "🌐 3D", "value": "3d"}
+                                 ],
+                                 id='graph-mode',
+                                 value='neon',
+                                 inline=True,
+                                 style={'margin-bottom': '30px'}
+                             )
+                         ])
+                     ]),
+                     html.Div(id='graph-container', style={'animation': 'fadeIn 0.8s ease'})
+                 ]), icon='📊'),
         
-        # Table Section
-        dbc.Card([
-            dbc.CardBody([
-                html.Div([
-                    html.H4('📋 Données Complètes', 
-                           style={'font-weight': '600', 'color': '#2D3748', 'margin-bottom': '5px'}),
-                    html.P('Tableau complet des mesures du dataset Iris', 
-                          className='text-muted mb-3')
-                ]),
-                table
-            ], className='p-4')
-        ], style=CARD_STYLE),
+        # Tableau de données
+        neon_card('🗄️ Matrice de Données Biométriques',
+                 dash_table.DataTable(
+                     df.to_dict(orient='records'),
+                     columns=[{'name': col.replace('_', ' ').title(), 'id': col} for col in df.columns],
+                     page_size=10,
+                     style_table={
+                         'overflowX': 'auto',
+                         'border-radius': '15px',
+                         'overflow': 'hidden'
+                     },
+                     style_header={
+                         'background': 'linear-gradient(135deg, #FF00FF, #00FFFF)',
+                         'color': 'white',
+                         'fontWeight': '700',
+                         'font-family': FONTS['title'],
+                         'padding': '15px',
+                         'border': 'none'
+                     },
+                     style_cell={
+                         'background': 'rgba(20, 20, 30, 0.8)',
+                         'color': COLORS['text_primary'],
+                         'font-family': FONTS['body'],
+                         'padding': '12px',
+                         'border': '1px solid rgba(255,255,255,0.05)'
+                     },
+                     style_data_conditional=[
+                         {
+                             'if': {'row_index': 'odd'},
+                             'backgroundColor': 'rgba(30, 30, 40, 0.6)'
+                         },
+                         {
+                             'if': {'state': 'selected'},
+                             'backgroundColor': 'rgba(255, 0, 255, 0.2)',
+                             'border': '1px solid #FF00FF'
+                         }
+                     ]
+                 ), icon='📋')
         
-    ], fluid=True, style={'padding': '0 30px 50px 30px', 'background': '#F7FAFC', 'min-height': '100vh'})
-], style={'background': '#F7FAFC'})
+    ], fluid=True, style={'padding': '0 40px 50px 40px'})
+], style={
+    'background': COLORS['background'],
+    'min-height': '100vh',
+    'font-family': FONTS['body'],
+    'position': 'relative'
+})
 
-layout2 = html.Div([
-    dbc.Container([
-        html.H1('Page 2 - En construction', className='text-center mt-5')
-    ])
+# =============================================================================
+# CALLBACKS INTERACTIFS
+# =============================================================================
+@app.callback(
+    Output('stats-setosa', 'children'),
+    Input('dropdown-setosa', 'value')
+)
+def update_setosa_stats(var):
+    return create_species_stats(var, 'setosa', COLORS['setosa'])
+
+@app.callback(
+    Output('stats-versicolor', 'children'),
+    Input('dropdown-versicolor', 'value')
+)
+def update_versicolor_stats(var):
+    return create_species_stats(var, 'versicolor', COLORS['versicolor'])
+
+@app.callback(
+    Output('stats-virginica', 'children'),
+    Input('dropdown-virginica', 'value')
+)
+def update_virginica_stats(var):
+    return create_species_stats(var, 'virginica', COLORS['virginica'])
+
+@app.callback(
+    Output('graph-container', 'children'),
+    Input('graph-mode', 'value')
+)
+def update_graphs(mode):
+    if mode == '3d':
+        fig = create_futuristic_scatter('petal_length', 'petal_width', 'sepal_length', 
+                                       'Vue Tri-dimensionnelle')
+        return dbc.Col(dcc.Graph(figure=fig, config={'displayModeBar': False}), width=12)
+    else:
+        fig1 = create_futuristic_scatter('sepal_length', 'sepal_width', 
+                                        'Sepale: Longueur vs Largeur')
+        fig2 = create_futuristic_scatter('petal_length', 'petal_width', 
+                                        'Pétale: Longueur vs Largeur')
+        return [
+            dbc.Col(dcc.Graph(figure=fig1, config={'displayModeBar': False}), lg=6, md=12, className='mb-4'),
+            dbc.Col(dcc.Graph(figure=fig2, config={'displayModeBar': False}), lg=6, md=12, className='mb-4')
+        ]
+
+def create_species_stats(var, species, color):
+    """Crée un affichage de statistiques avec animations"""
+    data = df[df['species'] == species][var]
+    
+    return dbc.Row([
+        dbc.Col(animated_stat(f'{data.mean():.2f}', 'Moyenne', color), md=6),
+        dbc.Col(animated_stat(f'{data.std():.2f}', 'Écart-type', color), md=6),
+    ], className='g-2') + dbc.Row([
+        dbc.Col(animated_stat(f'{data.max():.2f}', 'Max', color), md=6),
+        dbc.Col(animated_stat(f'{data.min():.2f}', 'Min', color), md=6),
+    ], className='g-2')
+
+# =============================================================================
+# APP INITIALIZATION
+# =============================================================================
+app = Dash(__name__, external_stylesheets=[
+    dbc.themes.DARKLY,
+    'https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@300;400;600&display=swap'
 ])
 
 app.layout = html.Div([
     dcc.Location(id='url'),
-    html.Div(id='navbar_content'),
-    html.Div(id='page_content')
+    html.Div(id='navbar-container'),
+    html.Div(id='page-container')
 ])
 
-# ========================== Callbacks ====================================
 @app.callback(
-    Output('navbar_content', 'children'),
-    Output('page_content', 'children'),
+    Output('navbar-container', 'children'),
+    Output('page-container', 'children'),
     Input('url', 'pathname')
 )
-def switch_page(path):
-    actual_navbar = navbar(pathname=path)
-    
-    if path == '/':
-        page_content = layout1
-    elif path == '/fda':
-        page_content = layout2
-    else:
-        page_content = dbc.Container([
-            html.Div([
-                html.H1('404', style={
-                    'font-size': '6rem',
-                    'font-weight': '700',
-                    'color': '#667eea',
-                    'margin-top': '100px'
-                }),
-                html.H3('Page non trouvée', style={'color': '#718096'}),
-                dbc.Button('Retour à l\'accueil', href='/', color='primary', className='mt-3')
-            ], className='text-center')
-        ])
-    
-    return actual_navbar, page_content
+def route(path):
+    return create_navbar(path), layout_home
 
-@app.callback(
-    Output('graphs', 'children'),
-    Input('style_graph', 'value')
-)
-def update_graph_layout(stl):
-    scatter_plot.update_layout(template=stl)
-    scatter_plot2.update_layout(template=stl)
-    scatter_plot3.update_layout(template=stl)
-    
-    return [
-        dbc.Col(dcc.Graph(figure=scatter_plot, config={'displayModeBar': False}), 
-                lg=4, md=12, className='mb-3 mb-lg-0'),
-        dbc.Col(dcc.Graph(figure=scatter_plot2, config={'displayModeBar': False}), 
-                lg=4, md=12, className='mb-3 mb-lg-0'),
-        dbc.Col(dcc.Graph(figure=scatter_plot3, config={'displayModeBar': False}), 
-                lg=4, md=12, className='mb-3 mb-lg-0'),
-    ]
+# =============================================================================
+# CSS ANIMATIONS ET STYLES PERSONNALISÉS
+# =============================================================================
+app.index_string = '''
+<!DOCTYPE html>
+<html>
+<head>
+{%metas%}
+<title>Iris Dashboard 2077</title>
+{%favicon%}
+{%css%}
+<style>
+* {
+    box-sizing: border-box;
+}
 
-def create_stat_display(val, species_name, color):
-    species_data = df.loc[df['species'] == species_name, val]
-    moyenne = round(species_data.mean(), 2)
-    variance = round(species_data.std(), 2)
-    max_val = species_data.max()
-    min_val = species_data.min()
-    
-    stats = [
-        {'icon': '📊', 'label': 'Moyenne', 'value': moyenne},
-        {'icon': '📈', 'label': 'Écart-type', 'value': variance},
-        {'icon': '⬆️', 'label': 'Maximum', 'value': max_val},
-        {'icon': '⬇️', 'label': 'Minimum', 'value': min_val},
-    ]
-    
-    return [
-        html.Div([
-            html.Div([
-                html.Span(stat['icon'], style={'font-size': '1.3rem', 'margin-right': '10px'}),
-                html.Span(stat['label'], 
-                         style={'font-weight': '500', 'color': '#4A5568', 'flex': '1'}),
-                html.Span(str(stat['value']), 
-                         style={'font-weight': '700', 'color': color, 'font-size': '1.1rem'})
-            ], style={
-                'display': 'flex',
-                'align-items': 'center',
-                'padding': '12px 16px',
-                'background': 'white',
-                'border-radius': '10px',
-                'margin-bottom': '8px',
-                'box-shadow': '0 2px 8px rgba(0,0,0,0.05)',
-                'transition': 'all 0.2s ease'
-            })
-        ]) for stat in stats
-    ]
+/* Animations clés */
+@keyframes glow {
+    0%, 100% { filter: brightness(1) drop-shadow(0 0 15px #FF00FF); }
+    50% { filter: brightness(1.2) drop-shadow(0 0 25px #00FFFF); }
+}
 
-@app.callback(
-    Output('stats_setosa', 'children'),
-    Input('liste_pour_setosa', 'value')
-)
-def stats_setosa(val):
-    return create_stat_display(val, 'setosa', colors['setosa'])
+@keyframes slideIn {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
 
-@app.callback(
-    Output('stats_versicolor', 'children'),
-    Input('liste_pour_versicolor', 'value')
-)
-def stats_versicolor(val):
-    return create_stat_display(val, 'versicolor', colors['versicolor'])
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
 
-@app.callback(
-    Output('stats_virginica', 'children'),
-    Input('liste_pour_virginica', 'value')
-)
-def stats_virginica(val):
-    return create_stat_display(val, 'virginica', colors['virginica'])
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
 
-app.title = 'Iris Dashboard - Analyse Interactive'
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+/* Particules d'arrière-plan */
+.particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: var(--color);
+    border-radius: 50%;
+    animation: float 6s ease-in-out infinite;
+    animation-delay: var(--delay);
+    box-shadow: 0 0 10px var(--color);
+}
+
+/* Effet hover sur les cartes */
+.neon-card:hover {
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: 0 0 50px rgba(255, 0, 255, 0.4), 
+                inset 0 0 30px rgba(255,255,255,0.1) !important;
+    border-color: rgba(255, 0, 255, 0.6) !important;
+}
+
+/* Scrollbar futuriste */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #0a0a0a;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #FF00FF, #00FFFF);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #00FFFF, #FF00FF);
+}
+
+/* Loader futuriste */
+.dash-spinner * {
+    border-color: #FF00FF !important;
+}
+
+/* Style des dropdowns */
+.Select-control, .Select-menu-outer {
+    background: rgba(20, 20, 30, 0.9) !important;
+    border: 1px solid rgba(255,0,255,0.3) !important;
+    color: white !important;
+}
+
+.Select-value-label, .Select-option {
+    color: white !important;
+}
+
+.Select-option:hover {
+    background: rgba(255,0,255,0.2) !important;
+}
+
+/* Radio items futuristes */
+.form-check-input:checked {
+    background-color: #FF00FF !important;
+    border-color: #FF00FF !important;
+    box-shadow: 0 0 10px #FF00FF;
+}
+
+.form-check-input:focus {
+    box-shadow: 0 0 0 0.25rem rgba(255, 0, 255, 0.25);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    h1 { font-size: 2.5rem !important; }
+    .neon-card { margin-bottom: 20px; }
+}
+</style>
+</head>
+<body>
+{%app_entry%}
+<footer>
+{%config%}
+{%scripts%}
+{%renderer%}
+</footer>
+</body>
+</html>
+'''
 
 if __name__ == '__main__':
-    app.run(debug=True, port=8050)
+    app.run(debug=True, port=8080)
