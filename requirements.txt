@@ -2,4 +2,6 @@ dash
 plotly
 gunicorn
 plotly[express]
+pandas 
+numpy
 dash_bootstrap_components
