@@ -45,6 +45,7 @@ liste_deroulante3 = dcc.Dropdown(options=liste_variable_numeric,
                                  id='liste_pour_virginica')
 # ==========================  ====================================
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+server = app.server
 
 
 layout1 = html.Div(children=[
