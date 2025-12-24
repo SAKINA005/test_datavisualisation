@@ -2,9 +2,70 @@ from dash import html, Dash, dcc, dash_table, Output, Input
 import plotly.express as px
 import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
-from nav_bar import navbar
 
 df = px.data.iris()
+
+# ========================== Navbar élégante ====================================
+def navbar(pathname):
+    return html.Div([
+        dbc.Container([
+            dbc.Row([
+                dbc.Col([
+                    html.Div([
+                        html.Span('🌸', style={'font-size': '1.8rem', 'margin-right': '10px'}),
+                        html.Span('Iris Dashboard', style={
+                            'font-size': '1.5rem',
+                            'font-weight': '700',
+                            'background': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            '-webkit-background-clip': 'text',
+                            '-webkit-text-fill-color': 'transparent'
+                        })
+                    ], style={'display': 'flex', 'align-items': 'center'})
+                ], width='auto'),
+                dbc.Col([
+                    html.Div([
+                        dcc.Link(
+                            "Accueil",
+                            href="/",
+                            className="nav-link",
+                            style={
+                                'color': '#667eea' if pathname == "/" else '#718096',
+                                'font-weight': '600' if pathname == "/" else '500',
+                                'padding': '10px 20px',
+                                'border-radius': '8px',
+                                'background': 'rgba(102, 126, 234, 0.1)' if pathname == "/" else 'transparent',
+                                'transition': 'all 0.3s ease',
+                                'text-decoration': 'none',
+                                'margin-right': '10px'
+                            }
+                        ),
+                        dcc.Link(
+                            "Analyse FDA",
+                            href="/fda",
+                            className="nav-link",
+                            style={
+                                'color': '#667eea' if pathname == "/fda" else '#718096',
+                                'font-weight': '600' if pathname == "/fda" else '500',
+                                'padding': '10px 20px',
+                                'border-radius': '8px',
+                                'background': 'rgba(102, 126, 234, 0.1)' if pathname == "/fda" else 'transparent',
+                                'transition': 'all 0.3s ease',
+                                'text-decoration': 'none'
+                            }
+                        ),
+                    ], style={'display': 'flex', 'align-items': 'center', 'justify-content': 'flex-end'})
+                ], className='text-end')
+            ], align='center', className='g-0')
+        ], fluid=True)
+    ], style={
+        'background': 'white',
+        'padding': '15px 0',
+        'box-shadow': '0 2px 8px rgba(0,0,0,0.08)',
+        'margin-bottom': '0',
+        'position': 'sticky',
+        'top': '0',
+        'z-index': '1000'
+    })
 
 colors = {
     'setosa': '#FF6B6B',
@@ -292,13 +353,25 @@ app.layout = html.Div([
     Input('url', 'pathname')
 )
 def switch_page(path):
-    actual_navbar = navbar(lien=path)
+    actual_navbar = navbar(pathname=path)
+    
     if path == '/':
         page_content = layout1
     elif path == '/fda':
         page_content = layout2
     else:
-        page_content = html.H3('404 - Page non trouvée')
+        page_content = dbc.Container([
+            html.Div([
+                html.H1('404', style={
+                    'font-size': '6rem',
+                    'font-weight': '700',
+                    'color': '#667eea',
+                    'margin-top': '100px'
+                }),
+                html.H3('Page non trouvée', style={'color': '#718096'}),
+                dbc.Button('Retour à l\'accueil', href='/', color='primary', className='mt-3')
+            ], className='text-center')
+        ])
     
     return actual_navbar, page_content
 
